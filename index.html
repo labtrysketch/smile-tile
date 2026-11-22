@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cosy Tile Pattern Maker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>🎀 Cosy Tile Pattern Maker</h1>
+  <p class="tag">Place your motifs, watch them wrap, export a seamless tile.</p>
+  <div class="hdr-btns">
+    <button id="undoBtn" title="Undo (Ctrl+Z)">↶ Undo</button>
+    <button id="redoBtn" title="Redo (Ctrl+Shift+Z)">↷ Redo</button>
+    <button id="saveProj" title="Save project as a .json file">💾 Save project</button>
+    <label class="btn" title="Open a saved .json project">📂 Open project<input type="file" id="loadProj" accept=".json,application/json" hidden></label>
+    <button id="newProj" title="Start fresh">🧺 New</button>
+  </div>
+</header>
+
+<main>
+  <aside class="left">
+    <section class="card">
+      <h2>1 · Motifs</h2>
+      <label class="btn primary wide">⬆️ Upload SVG / PNG<input type="file" id="upload" accept=".svg,image/svg+xml,.png,image/png" multiple hidden></label>
+      <p class="hint">Click a motif to add it, or drag it onto the tile.</p>
+      <div id="library" class="library"></div>
+      <button id="tossBtn" class="wide" title="Add one of each motif at a random spot">✨ Toss one of each</button>
+    </section>
+
+    <section class="card">
+      <h2>2 · Tile &amp; grid</h2>
+      <label class="row">Tile size
+        <select id="tileSize">
+          <option value="1000">1000 × 1000 px</option>
+          <option value="2000" selected>2000 × 2000 px</option>
+        </select>
+      </label>
+      <p class="hint" id="printHint"></p>
+      <label class="row">Repeat
+        <select id="gridMode">
+          <option value="square">Square (straight repeat)</option>
+          <option value="brick">Diamond · half-brick (rows offset ½)</option>
+          <option value="halfdrop">Diamond · half-drop (columns offset ½)</option>
+        </select>
+      </label>
+      <label class="row">Grid divisions <input type="range" id="gridDiv" min="2" max="16" value="4"><span id="gridDivVal">4</span></label>
+      <label class="check"><input type="checkbox" id="showGrid" checked> Show grid lines</label>
+      <label class="check"><input type="checkbox" id="snap"> Snap to grid</label>
+      <label class="check"><input type="checkbox" id="showGhost" checked> Show ghosted neighbours</label>
+      <label class="row">Background <input type="color" id="bgColor" value="#FFF8EE"></label>
+      <label class="check"><input type="checkbox" id="bgTransparent"> Transparent background</label>
+      <div class="swatches" id="swatches"></div>
+    </section>
+  </aside>
+
+  <section class="center">
+    <div class="editor-wrap card">
+      <svg id="editor" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+        <defs id="edDefs"></defs>
+        <defs id="edPatDefs">
+          <pattern id="checker" width="40" height="40" patternUnits="userSpaceOnUse">
+            <rect width="40" height="40" fill="#ffffff"/><rect width="20" height="20" fill="#eee5dc"/><rect x="20" y="20" width="20" height="20" fill="#eee5dc"/>
+          </pattern>
+        </defs>
+        <g id="edBg"></g>
+        <g id="edInst"></g>
+        <path id="edFade" fill="#FFFDF9" fill-rule="evenodd" pointer-events="none"></path>
+        <g id="edGrid" pointer-events="none"></g>
+        <g id="edSel"></g>
+      </svg>
+      <p class="hint center-hint">The bright square in the middle is your tile. The faded tiles around it show how it repeats — anything crossing an edge pops back in on the opposite side.</p>
+    </div>
+  </section>
+
+  <aside class="right">
+    <section class="card" id="selCard">
+      <h2>3 · Selected motif</h2>
+      <p class="hint" id="noSel">Click a motif on the tile to edit it.</p>
+      <div id="selControls" hidden>
+        <label class="row">Size <input type="range" id="selSize" min="2" max="80" step="0.5"><span id="selSizeVal"></span></label>
+        <label class="row">Rotate <input type="range" id="selRot" min="-180" max="180" step="1"><span id="selRotVal"></span></label>
+        <div class="btn-grid">
+          <button id="dupBtn" title="Ctrl+D">➕ Duplicate</button>
+          <button id="delBtn" title="Delete key">🗑 Delete</button>
+          <button id="upBtn">⬆ Bring forward</button>
+          <button id="downBtn">⬇ Send back</button>
+          <button id="flipXBtn">↔ Flip</button>
+          <button id="flipYBtn">↕ Flip</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>4 · Preview</h2>
+      <canvas id="preview" width="600" height="600"></canvas>
+      <label class="row">Zoom <input type="range" id="pvZoom" min="1" max="8" step="0.5" value="3"><span id="pvZoomVal">3 × 3</span></label>
+    </section>
+
+    <section class="card">
+      <h2>5 · Export</h2>
+      <label class="row" id="exportShapeRow">Tile shape
+        <select id="exportShape">
+          <option value="straight">Straight repeat (works everywhere)</option>
+          <option value="unit">Single offset unit (set half-drop/brick on the print site)</option>
+        </select>
+      </label>
+      <label class="row">PNG size <input type="number" id="pngPx" min="100" max="12000" step="100" value="2000"> px</label>
+      <label class="row">DPI <input type="number" id="pngDpi" min="72" max="1200" step="1" value="300"></label>
+      <p class="hint" id="exportHint"></p>
+      <label class="row">SVG style
+        <select id="svgStyle">
+          <option value="inline">Inline paths (best for Affinity)</option>
+          <option value="use">Symbols &lt;use&gt; (smaller file)</option>
+        </select>
+      </label>
+      <div class="btn-grid">
+        <button class="primary" id="expSvg">⬇ SVG</button>
+        <button class="primary" id="expPng">⬇ PNG</button>
+        <button class="primary" id="expPdf">⬇ PDF</button>
+      </div>
+    </section>
+  </aside>
+</main>
+<div id="toast"></div>
+<footer>Made with 💕 · everything runs in your browser, nothing is uploaded.</footer>
+<script src="vendor/jspdf.umd.min.js"></script>
+<script src="vendor/svg2pdf.umd.min.js"></script>
+<script src="samples.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
