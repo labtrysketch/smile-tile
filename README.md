@@ -1,6 +1,7 @@
 # Cosy Tile Pattern Maker (v1)
 
 **Live:** [https://smile-tile.vercel.app](https://smile-tile.vercel.app)
+Sister apps (header, open in a new tab): [Cosy Vector Sketchpad](https://cosy-vector-sketchpad.vercel.app) and [Cosy Pattern Checker](https://cosy-pattern-checker.vercel.app).
 
 Static web app – open `index.html` (or host the folder on GitHub Pages). No build step, no server code.
 
